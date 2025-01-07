@@ -39,30 +39,40 @@ function confirmMobile() {
     })
 }
 
-function promiseConfirmMobile(){
-    try{
+function promiseConfirmMobile() {
+    try {
         const isIOS = !!(
             navigator.userAgent.match(/(iPod|iPhone|iPad)/) &&
             navigator.userAgent.match(/AppleWebKit/)
         );
-    
+
         if (isIOS) {
-            DeviceOrientationEvent.requestPermission()
-              .then((response) => {
-                if (response === "granted") {
-                  window.addEventListener("deviceorientation", handler, true);
-                } else {
-                  alert("has to be allowed!");
-                }
-              })
-              .catch(() => alert("not supported"));
-          } else {
-            window.addEventListener("deviceorientationabsolute", handler, true);
-          }
-    }catch(err){
-        console.error(new Error('Not a mobile device'));
+            if (typeof DeviceOrientationEvent.requestPermission === "function") {
+                DeviceOrientationEvent.requestPermission()
+                    .then((response) => {
+                        if (response === "granted") {
+                            console.log("iOS device: permission granted.");
+                            window.addEventListener("deviceorientation", handler, true);
+                        } else {
+                            alert("Permission denied. Enable motion & orientation access in Safari settings.");
+                        }
+                    })
+                    .catch((error) => {
+                        console.error("Permission request failed:", error);
+                        alert("Device orientation is not supported or permission request failed.");
+                    });
+            } else {
+                alert("DeviceOrientationEvent.requestPermission is not available.");
+            }
+        } else {
+            console.log("Non-iOS device detected. Adding event listener.");
+            window.addEventListener("deviceorientation", handler, true);
+        }
+    } catch (err) {
+        console.error("Error during mobile confirmation:", err);
     }
-}   
+}
+
 
 let compass; 
 function handler(e) {
