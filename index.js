@@ -29,8 +29,6 @@ async function init(){
     //rotate arrow
     await rotateArrow();
 
-    await calcuateAngleWhichPlayerHasToMove();
-
 }
 
 function confirmMobile() {
