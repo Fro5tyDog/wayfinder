@@ -1,0 +1,23 @@
+h1 {
+    display: flex;
+    justify-content: center;
+}
+
+#location-data {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.arrow-container {
+    display: flex;
+    justify-content: center;
+    /* transform: rotate(61deg); */
+}
+
+.compass-container {
+    display: flex;
+    justify-content: center;
+    /* transform: rotate(61deg); */
+}
