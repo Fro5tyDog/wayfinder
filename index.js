@@ -65,14 +65,6 @@ function promiseConfirmMobile(){
     }
 }   
 
-
-// function handler(e) {
-//     // || Math.abs(e.alpha - 360);
-//     compassHeading = e.webkitCompassHeading;
-//     ChangeCompassArrowOrientation();
-//     rotateArrowToDestination(angle, compassHeading);
-// }
-
 function handler(e) {
     if (e.webkitCompassHeading !== undefined) {
         compassHeading = e.webkitCompassHeading; // iOS-specific
