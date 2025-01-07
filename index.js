@@ -88,7 +88,6 @@ function handler(e) {
 function startAnimationLoop() {
     function update() {
         if (isCompassReady) {
-            document.getElementById("debug").innerHTML = "Updated Angle to Destination: " + angle;
             document.getElementById("debug2").innerHTML = "Compass Heading: " + compassHeading;
             // Update compass arrow
             const compassElement = document.getElementById("compass");
@@ -104,9 +103,10 @@ function startAnimationLoop() {
 
             // Update target pointer arrow
             const shortestDifference = calculateShortestRotation(angle, compassHeading);
+            document.getElementById("debug").innerHTML = "Updated Angle to Destination: " + shortestDifference;
             const targetPointer = document.getElementById("target-pointer");
             if (targetPointer) {
-                targetPointer.style.transform = `rotate(${compassHeading + shortestDifference}deg)`;
+                targetPointer.style.transform = `rotate(${shortestDifference}deg)`;
             }
         }
 
