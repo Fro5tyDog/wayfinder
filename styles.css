@@ -21,3 +21,9 @@ h1 {
     justify-content: center;
     /* transform: rotate(61deg); */
 }
+
+.target-pointer-container {
+    display: flex;
+    justify-content: center;
+    /* transform: rotate(61deg); */
+}

@@ -29,6 +29,8 @@ async function init(){
     //rotate arrow
     await rotateArrow();
 
+    await calcuateAngleWhichPlayerHasToMove();
+
 }
 
 function confirmMobile() {
@@ -68,21 +70,51 @@ function promiseConfirmMobile(){
     }
 }   
 
-let compass; 
+let compassHeading; 
 function handler(e) {
     // || Math.abs(e.alpha - 360);
-    compass = e.webkitCompassHeading;
+    compassHeading = e.webkitCompassHeading;
     ChangeCompassArrowOrientation();
+    rotateArrowToDestination(angle, compassHeading);
 }
 
 function ChangeCompassArrowOrientation(){
     try{
         // rotate arrow
-        document.getElementById("compass").style.transform = `rotate(${compass}deg)`;
+        document.getElementById("compass").style.transform = `rotate(${compassHeading}deg)`;
     } catch(error) {
         console.error('Error:', error);
     }
 }
+
+function rotateArrowToDestination(destinationAngle, compassHeading) {
+    // Calculate the shortest angle
+    const shortestDifference = calculateShortestRotation(destinationAngle, compassHeading);
+    if(destinationAngle != null){
+        // Update the arrow rotation
+        const targetPointer = document.getElementById("target-pointer");
+        if (targetPointer) {
+            // Rotate the arrow by the shortest angle
+            targetPointer.style.transform = `rotate(${compassHeading + shortestDifference}deg)`;
+            console.log(`targetPointer rotated by ${shortestDifference} degrees.`);
+        } else {
+            console.error("targetPointer element not found.");
+        }
+    } else{
+        return;
+    }   
+}
+
+function calculateShortestRotation(destinationAngle, compassHeading) {
+    // Calculate the raw difference
+    let rawDifference = destinationAngle - compassHeading;
+
+    // Normalize the difference to -180 to 180
+    let shortestDifference = (rawDifference + 180) % 360 - 180;
+
+    return shortestDifference; // Shortest rotation angle
+}
+
 
 function fetchLocationData() {
     return new Promise((resolve, reject) => {
@@ -228,16 +260,24 @@ function findAngleWithoutOrientation(){
 
         switch(currentQuadrant){
             case 'North East':
-                angle = Math.floor((Math.atan2(lat_diff, lng_diff) * 180 / Math.PI));
+                angle = Math.floor((Math.atan2(lng_diff, lat_diff) * 180 / Math.PI));
+                angle = (angle + 360) % 360; // Normalize to 0-359 degrees
+                angle = Math.floor(angle); // Round down
                 break;
             case 'North West':
                 angle = Math.floor((Math.atan2(lng_diff, lat_diff) * 180 / Math.PI));
+                angle = (angle + 360) % 360; // Normalize to 0-359 degrees
+                angle = Math.floor(angle); // Round down
                 break;
             case 'South West':
                 angle = Math.floor((Math.atan2(lng_diff, lat_diff) * 180 / Math.PI));
+                angle = (angle + 360) % 360; // Normalize to 0-359 degrees
+                angle = Math.floor(angle); // Round down
                 break;
             case 'South East':
-                angle = Math.floor((Math.atan2(lat_diff, lng_diff) * 180 / Math.PI));
+                angle = Math.floor((Math.atan2(lng_diff, lat_diff) * 180 / Math.PI));
+                angle = (angle + 360) % 360; // Normalize to 0-359 degrees
+                angle = Math.floor(angle); // Round down
                 break;
             default:
                 return 0; // return 0 if the current quadrant is not defined (which should not happen)
