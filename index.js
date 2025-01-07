@@ -48,17 +48,17 @@ function promiseConfirmMobile(){
     
         if (isIOS) {
             DeviceOrientationEvent.requestPermission()
-                .then((response) => {
+              .then((response) => {
                 if (response === "granted") {
-                    window.addEventListener("deviceorientation", handler, true);
+                  window.addEventListener("deviceorientation", handler, true);
                 } else {
-                    alert("has to be allowed!");
+                  alert("has to be allowed!");
                 }
-                })
-                .catch(() => alert("not supported"));
-            } else {
+              })
+              .catch(() => alert("not supported"));
+          } else {
             window.addEventListener("deviceorientationabsolute", handler, true);
-            }
+          }
     }catch(err){
         console.error(new Error('Not a mobile device'));
     }
