@@ -88,6 +88,7 @@ function handler(e) {
 function startAnimationLoop() {
     function update() {
         if (isCompassReady) {
+            document.getElementById("debug").innerHTML = `Compass Heading: ${compassHeading}` + "\n" + `Updated Angle to Destination: ${angle}`;
             // Update compass arrow
             const compassElement = document.getElementById("compass");
             if (compassElement) {
