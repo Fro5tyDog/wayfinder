@@ -1,4 +1,11 @@
-init();
+document.getElementById("startButton").addEventListener("click", async () => {
+    console.log("Start button clicked!");
+
+    // Start the initialization process
+    // wait to force iphone to initalize
+    await confirmMobile();
+    await init();
+});
 
 let originLat;
 let originLng;
@@ -9,9 +16,6 @@ let destLng;
 const dest = { lat: destLat, lng: destLng };
 
 async function init(){
-
-    // wait to force iphone to initalize
-    await confirmMobile();
 
     // wait for json data to be fetched
     await fetchLocationData();
