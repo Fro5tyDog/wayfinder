@@ -2,9 +2,11 @@ document.getElementById("startButton").addEventListener("click", async () => {
     console.log("Start button clicked!");
 
     // Start the initialization process
-    // wait to force iphone to initalize
     await confirmMobile();
     await init();
+
+    // Start the animation loop for updates
+    startAnimationLoop();
 });
 
 let originLat;
@@ -15,20 +17,14 @@ let destLat;
 let destLng;
 const dest = { lat: destLat, lng: destLng };
 
-async function init(){
+let compassHeading = 0; // Current heading of the phone
+let angle = 0; // Angle to the destination
+let isCompassReady = false; // Ensure compass data is initialized
 
-    // wait for json data to be fetched
+async function init() {
     await fetchLocationData();
-
-    // Check the location data quadrant
     await fetchQuadrantData();
-
-    // Calcuate angle to orient the arrow in without the orientation of the device
     await fetchAngleWithoutOrientation();
-
-    //rotate arrow
-    await rotateArrow();
-
 }
 
 function confirmMobile() {
@@ -68,40 +64,51 @@ function promiseConfirmMobile(){
     }
 }   
 
-let compassHeading; 
+
+// function handler(e) {
+//     // || Math.abs(e.alpha - 360);
+//     compassHeading = e.webkitCompassHeading;
+//     ChangeCompassArrowOrientation();
+//     rotateArrowToDestination(angle, compassHeading);
+// }
+
 function handler(e) {
-    // || Math.abs(e.alpha - 360);
-    compassHeading = e.webkitCompassHeading;
-    ChangeCompassArrowOrientation();
-    rotateArrowToDestination(angle, compassHeading);
-}
-
-function ChangeCompassArrowOrientation(){
-    try{
-        // rotate arrow
-        document.getElementById("compass").style.transform = `rotate(${compassHeading}deg)`;
-    } catch(error) {
-        console.error('Error:', error);
+    if (e.webkitCompassHeading !== undefined) {
+        compassHeading = e.webkitCompassHeading; // iOS-specific
+    } else if (e.alpha !== null) {
+        compassHeading = 360 - e.alpha; // Normalize alpha to compass direction
+    } else {
+        console.warn("Compass heading not available.");
     }
+    isCompassReady = true; // Mark that compass data is now ready
 }
 
-function rotateArrowToDestination(destinationAngle, compassHeading) {
-    // Calculate the shortest angle
-    const shortestDifference = calculateShortestRotation(destinationAngle, compassHeading);
-    if(destinationAngle != null){
-        // Update the arrow rotation
-        const targetPointer = document.getElementById("target-pointer");
-        if (targetPointer) {
-            // Rotate the arrow by the shortest angle
-            targetPointer.style.transform = `rotate(${compassHeading + shortestDifference}deg)`;
-            console.log(`targetPointer rotated by ${shortestDifference} degrees.`);
-        } else {
-            console.error("targetPointer element not found.");
+// Animation Loop
+function startAnimationLoop() {
+    function update() {
+        if (isCompassReady) {
+            // Update compass arrow
+            const compassElement = document.getElementById("compass");
+            if (compassElement) {
+                compassElement.style.transform = `rotate(${compassHeading}deg)`;
+            }
+
+            // Update target pointer arrow
+            const shortestDifference = calculateShortestRotation(angle, compassHeading);
+            const targetPointer = document.getElementById("target-pointer");
+            if (targetPointer) {
+                targetPointer.style.transform = `rotate(${compassHeading + shortestDifference}deg)`;
+            }
         }
-    } else{
-        return;
-    }   
+
+        // Request the next frame
+        requestAnimationFrame(update);
+    }
+
+    // Start the loop
+    update();
 }
+
 
 function calculateShortestRotation(destinationAngle, compassHeading) {
     // Calculate the raw difference
@@ -112,7 +119,6 @@ function calculateShortestRotation(destinationAngle, compassHeading) {
 
     return shortestDifference; // Shortest rotation angle
 }
-
 
 function fetchLocationData() {
     return new Promise((resolve, reject) => {
@@ -236,7 +242,6 @@ function findQuadrantData(){
 }
 
 // step3
-let angle = 0;
 function fetchAngleWithoutOrientation() {
     return new Promise((resolve, reject) => {
         try{
