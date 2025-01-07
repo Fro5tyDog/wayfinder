@@ -94,6 +94,12 @@ function startAnimationLoop() {
                 compassElement.style.transform = `rotate(${compassHeading}deg)`;
             }
 
+            // Dynamically recalculate the destination angle
+            const lat_diff = dest.lat - origin.lat;
+            const lng_diff = dest.lng - origin.lng;
+            const updatedAngle = (Math.atan2(lng_diff, lat_diff) * 180) / Math.PI;
+            angle = (updatedAngle + 360) % 360; // Normalize to 0-359 degrees
+
             // Update target pointer arrow
             const shortestDifference = calculateShortestRotation(angle, compassHeading);
             const targetPointer = document.getElementById("target-pointer");
@@ -109,6 +115,7 @@ function startAnimationLoop() {
     // Start the loop
     update();
 }
+
 
 
 function calculateShortestRotation(destinationAngle, compassHeading) {
