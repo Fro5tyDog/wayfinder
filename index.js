@@ -8,101 +8,105 @@ let destLat;
 let destLng;
 const dest = { lat: destLat, lng: destLng };
 
-async function init() {
-    // Confirm mobile and request permissions
+async function init(){
+
+    // wait to force iphone to initalize
     await confirmMobile();
 
-    // Fetch JSON location data
+    // wait for json data to be fetched
     await fetchLocationData();
 
-    // Check the quadrant based on origin and destination
+    // Check the location data quadrant
     await fetchQuadrantData();
 
-    // Calculate the angle without considering the device orientation
+    // Calcuate angle to orient the arrow in without the orientation of the device
     await fetchAngleWithoutOrientation();
 
-    // Rotate the arrow
+    //rotate arrow
     await rotateArrow();
+
 }
 
-// Confirm device orientation support and request permissions for iOS
 function confirmMobile() {
-    return new Promise((resolve) => {
-        const isIOS = !!(
+    return new Promise((resolve, reject) => {
+        try{
+            // Call the function to fetch the Quadrant Data
+            resolve(promiseConfirmMobile());
+        }
+        catch(error){
+            reject(new Error(`Error fetching mobile phone data: ${error.message}`));
+        }   
+    })
+}
+
+function promiseConfirmMobile(){
+    try{
+        const isIOS = !(
             navigator.userAgent.match(/(iPod|iPhone|iPad)/) &&
             navigator.userAgent.match(/AppleWebKit/)
         );
-
+    
         if (isIOS) {
-            if (typeof DeviceOrientationEvent.requestPermission === "function") {
-                DeviceOrientationEvent.requestPermission()
-                    .then((response) => {
-                        if (response === "granted") {
-                            console.log("iOS device: permission granted.");
-                            window.addEventListener("deviceorientation", handler, true);
-                        } else {
-                            alert("Permission denied. Enable motion & orientation access in Safari settings.");
-                        }
-                        resolve();
-                    })
-                    .catch((error) => {
-                        console.error("Permission request failed:", error);
-                        alert("Device orientation permission request failed.");
-                        resolve();
-                    });
-            } else {
-                alert("DeviceOrientationEvent.requestPermission is unavailable.");
-                resolve();
-            }
-        } else {
-            console.log("Non-iOS device detected. Adding event listener.");
-            window.addEventListener("deviceorientation", handler, true);
-            resolve();
-        }
-    });
-}
-
-// Handle device orientation events
-let compass;
-function handler(e) {
-    if (e.webkitCompassHeading !== undefined) {
-        compass = e.webkitCompassHeading; // iOS-specific compass heading
-    } else if (e.alpha !== null) {
-        compass = 360 - e.alpha; // Fallback for non-iOS (alpha is relative to north)
-    } else {
-        console.warn("Device orientation data is unavailable.");
-        return;
+            DeviceOrientationEvent.requestPermission()
+              .then((response) => {
+                if (response === "granted") {
+                  window.addEventListener("deviceorientation", handler, true);
+                } else {
+                  alert("has to be allowed!");
+                }
+              })
+              .catch(() => alert("not supported"));
+          } else {
+            window.addEventListener("deviceorientationabsolute", handler, true);
+          }
+    }catch(err){
+        console.error(new Error('Not a mobile device'));
     }
+}   
 
+let compass; 
+function handler(e) {
+    // || Math.abs(e.alpha - 360);
+    compass = e.webkitCompassHeading;
     ChangeCompassArrowOrientation();
 }
 
-// Rotate the compass arrow based on the device's heading
-function ChangeCompassArrowOrientation() {
-    try {
-        const compassArrow = document.getElementById("compass");
-        if (compassArrow) {
-            compassArrow.style.transform = `rotate(${compass}deg)`;
-            console.log(`Compass rotated to ${compass} degrees.`);
-        } else {
-            console.error("Compass element not found.");
-        }
-    } catch (error) {
-        console.error("Error rotating compass arrow:", error);
+function ChangeCompassArrowOrientation(){
+    try{
+        // rotate arrow
+        document.getElementById("compass").style.transform = `rotate(${compass}deg)`;
+    } catch(error) {
+        console.error('Error:', error);
     }
 }
 
-// Fetch location data from JSON and update DOM
-async function fetchLocationData() {
+function fetchLocationData() {
+    return new Promise((resolve, reject) => {
+        try{
+            // Call the function to fetch and display the data
+            resolve(findAndDisplayLocations());
+        }
+        catch(error){
+            reject(new Error(`Error loading the JSON data: ${error.message}`));
+        }   
+    })
+}
+
+// step1 
+// Function to fetch JSON data and update the DOM
+async function findAndDisplayLocations() {
     try {
-        const response = await fetch("locations.json");
+        // Fetch JSON data (replace 'locations.json' with your actual file or API endpoint)
+        const response = await fetch('locations.json');
         if (!response.ok) {
             throw new Error(`Failed to fetch data: ${response.status}`);
         }
         const data = await response.json();
 
-        // Update location data in DOM
-        const locationDataDiv = document.getElementById("location-data");
+        // Select the location-data div
+        const locationDataDiv = document.getElementById('location-data');
+
+        // Create HTML content based on the JSON data
         const htmlContent = `
             <h2>Location Details</h2>
             <p><strong>Origin:</strong></p>
@@ -116,97 +120,152 @@ async function fetchLocationData() {
                 <li>Longitude: ${data.destination.longitude}</li>
             </ul>
         `;
+
+        // Insert the content into the div
         locationDataDiv.innerHTML = htmlContent;
 
-        // Set origin and destination coordinates
         originLat = data.origin.latitude;
         originLng = data.origin.longitude;
         destLat = data.destination.latitude;
         destLng = data.destination.longitude;
-        origin.lat = originLat;
-        origin.lng = originLng;
-        dest.lat = destLat;
+
+        origin.lat = originLat
+        origin.lng = originLng
+        dest.lat = destLat
         dest.lng = destLng;
 
-        console.log("Location data fetched and displayed.");
     } catch (error) {
-        console.error("Error fetching location data:", error);
+        console.error('Error:', error);
     }
 }
 
-// Determine the quadrant based on lat/lng differences
+// step2
+
 const QuadrantData = {
     NORTH_EAST: 0,
     NORTH_WEST: 270,
     SOUTH_EAST: 90,
-    SOUTH_WEST: 180,
+    SOUTH_WEST: 180
 };
 
 let currentQuadrantData;
 let currentQuadrant;
 
 function fetchQuadrantData() {
-    return new Promise((resolve) => {
-        try {
-            const lat_diff = dest.lat - origin.lat;
-            const lng_diff = dest.lng - origin.lng;
-
-            if (lat_diff > 0 && lng_diff > 0) {
-                currentQuadrantData = QuadrantData.NORTH_EAST;
-                currentQuadrant = "North East";
-            } else if (lat_diff > 0 && lng_diff < 0) {
-                currentQuadrantData = QuadrantData.NORTH_WEST;
-                currentQuadrant = "North West";
-            } else if (lat_diff < 0 && lng_diff < 0) {
-                currentQuadrantData = QuadrantData.SOUTH_WEST;
-                currentQuadrant = "South West";
-            } else if (lat_diff < 0 && lng_diff > 0) {
-                currentQuadrantData = QuadrantData.SOUTH_EAST;
-                currentQuadrant = "South East";
-            }
-
-            console.log(`Current quadrant: ${currentQuadrant}`);
-            console.log(`Quadrant value to add: ${currentQuadrantData}`);
-            resolve();
-        } catch (error) {
-            console.error("Error determining quadrant:", error);
+    return new Promise((resolve, reject) => {
+        try{
+            // Call the function to fetch the Quadrant Data
+            resolve(findQuadrantData());
         }
-    });
+        catch(error){
+            reject(new Error(`Error calculating the quadrant data: ${error.message}`));
+        }   
+    })
 }
 
-// Calculate the angle to the destination without considering orientation
+function findQuadrantData(){
+    try{
+        // find difference in lat and lng between distance and origin
+        const lat_diff = dest.lat - origin.lat;
+        const lng_diff = dest.lng - origin.lng;
+
+        // evaluate which are positive and which are negative
+        // determine quadrant based on the evaluated values
+        
+        // North east, positive lat and positive lng
+        if(lat_diff > 0 && lng_diff > 0){
+            currentQuadrantData = QuadrantData.NORTH_EAST;
+            currentQuadrant = 'North East';
+        }
+        // North west, positive lat and negative lng
+        if(lat_diff > 0 && lng_diff < 0){
+            currentQuadrantData = QuadrantData.NORTH_WEST;
+            currentQuadrant = 'North West';
+        }
+        // South west, negative lat and negative lng
+        if(lat_diff < 0 && lng_diff < 0){
+            currentQuadrantData = QuadrantData.SOUTH_WEST;
+            currentQuadrant = 'South West';
+        }
+        // South east, negative lat and positive lng
+        if(lat_diff < 0 && lng_diff > 0){
+            currentQuadrantData = QuadrantData.SOUTH_EAST;
+            currentQuadrant = 'South East';
+        }
+
+        console.log(`The current location is in Quadrant: ${currentQuadrant}`);
+        console.log(`The value to add is ${currentQuadrantData}`);
+    }
+    catch(error){
+        console.error('Error:', error);
+    }
+}
+
+// step3
 let angle = 0;
 function fetchAngleWithoutOrientation() {
-    return new Promise((resolve) => {
-        try {
-            const lat_diff = dest.lat - origin.lat;
-            const lng_diff = dest.lng - origin.lng;
-
-            angle = Math.atan2(lat_diff, lng_diff) * (180 / Math.PI);
-            angle = (angle + 360) % 360; // Normalize to 0-359 degrees
-
-            console.log(`Calculated angle to destination: ${angle}`);
-            resolve();
-        } catch (error) {
-            console.error("Error calculating angle:", error);
+    return new Promise((resolve, reject) => {
+        try{
+            // Call the function to fetch the Quadrant Data
+            resolve(findAngleWithoutOrientation());
         }
-    });
+        catch(error){
+            reject(new Error(`Error calculating the angle before phone orientation: ${error.message}`));
+        }   
+    })
 }
 
-// Rotate the arrow to point to the destination
-function rotateArrow() {
-    return new Promise((resolve) => {
-        try {
-            const arrow = document.getElementById("arrow");
-            if (arrow) {
-                arrow.style.transform = `rotate(${angle}deg)`;
-                console.log(`Arrow rotated to ${angle} degrees.`);
-            } else {
-                console.error("Arrow element not found.");
-            }
-            resolve();
-        } catch (error) {
-            console.error("Error rotating arrow:", error);
+function findAngleWithoutOrientation(){
+    try{
+        // latitude is the y coordinate of the graph
+        // longitude is the x coordinate of the graph
+        const lat_diff = dest.lat - origin.lat;
+        const lng_diff = dest.lng - origin.lng;
+
+        switch(currentQuadrant){
+            case 'North East':
+                angle = Math.floor((Math.atan2(lat_diff, lng_diff) * 180 / Math.PI));
+                break;
+            case 'North West':
+                angle = Math.floor((Math.atan2(lng_diff, lat_diff) * 180 / Math.PI));
+                break;
+            case 'South West':
+                angle = Math.floor((Math.atan2(lng_diff, lat_diff) * 180 / Math.PI));
+                break;
+            case 'South East':
+                angle = Math.floor((Math.atan2(lat_diff, lng_diff) * 180 / Math.PI));
+                break;
+            default:
+                return 0; // return 0 if the current quadrant is not defined (which should not happen)
         }
-    });
+        console.log(angle);
+
+
+    } catch(error) {
+        console.error('Error:', error);
+    }
 }
+
+// step 4
+
+function rotateArrow(){
+    return new Promise((resolve, reject) => {
+        try{
+            // Call the function to fetch the Quadrant Data
+            resolve(ChangeArrowOrientation());
+        }
+        catch(error){
+            reject(new Error(`Error calculating the quadrant data: ${error.message}`));
+        }   
+    })
+}
+
+function ChangeArrowOrientation(){
+    try{
+        // rotate arrow
+        document.getElementById("arrow").style.transform = `rotate(${angle}deg)`;
+    } catch(error) {
+        console.error('Error:', error);
+    }
+}
+

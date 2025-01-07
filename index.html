@@ -7,6 +7,12 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+    <p id="demo"></p>
+
+    <script>
+    let agent = navigator.userAgent;
+    document.getElementById("demo").innerHTML = "User-agent:<br>" + agent;
+    </script>
     
     <h1>WayFinder</h1>
     <div id="location-data"> 
