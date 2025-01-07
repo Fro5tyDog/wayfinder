@@ -41,7 +41,7 @@ function confirmMobile() {
 
 function promiseConfirmMobile(){
     try{
-        const isIOS = (
+        const isIOS = !!(
             navigator.userAgent.match(/(iPod|iPhone|iPad)/) &&
             navigator.userAgent.match(/AppleWebKit/)
         );
