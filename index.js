@@ -103,7 +103,7 @@ function startAnimationLoop() {
 
             // Update target pointer arrow
             const shortestDifference = calculateShortestRotation(updatedAngle, compassHeading);
-            document.getElementById("debug").innerHTML = "Updated Angle to Destination: " + shortestDifference;
+            document.getElementById("debug").innerHTML = "Updated Shortest Angle to Destination: " + shortestDifference;
             const targetPointer = document.getElementById("target-pointer");
             if (targetPointer) {
                 targetPointer.style.transform = `rotate(${shortestDifference}deg)`;
