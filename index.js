@@ -25,6 +25,7 @@ async function init() {
     await fetchLocationData();
     await fetchQuadrantData();
     await fetchAngleWithoutOrientation();
+    await rotateArrow();
 }
 
 function confirmMobile() {
