@@ -98,11 +98,11 @@ function startAnimationLoop() {
             // Dynamically recalculate the destination angle
             const lat_diff = dest.lat - origin.lat;
             const lng_diff = dest.lng - origin.lng;
-            const updatedAngle = (Math.atan2(lng_diff, lat_diff) * 180) / Math.PI;
-            angle = (updatedAngle + 360) % 360; // Normalize to 0-359 degrees
+            let updatedAngle = (Math.atan2(lng_diff, lat_diff) * 180) / Math.PI;
+            updatedAngle = (updatedAngle + 360) % 360; // Normalize to 0-359 degrees
 
             // Update target pointer arrow
-            const shortestDifference = calculateShortestRotation(angle, compassHeading);
+            const shortestDifference = calculateShortestRotation(updatedAngle, compassHeading);
             document.getElementById("debug").innerHTML = "Updated Angle to Destination: " + shortestDifference;
             const targetPointer = document.getElementById("target-pointer");
             if (targetPointer) {
